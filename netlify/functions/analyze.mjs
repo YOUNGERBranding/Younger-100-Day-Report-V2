@@ -63,7 +63,7 @@ export default async (req) => {
   let body;
   try { body = await req.json(); } catch { return json({ error: "bad json" }, 400); }
 
-  const key = process.env.CLAUDE_API_KEY;
+  const key = (process.env.CLAUDE_API_KEY || "").trim();
   if (!key) return json({ error: "CLAUDE_API_KEY not set" }, 500);
 
   try {
