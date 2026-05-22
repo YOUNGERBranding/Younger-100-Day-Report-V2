@@ -45,15 +45,17 @@
         <div><span class="label">健康顧問</span><input id="f-consultant" class="f" placeholder="顧問名稱"></div>
       </div>
       <div class="mt">
-        <span class="label">主要改善目標</span>
+        <div class="head-flex"><span class="label">主要改善目標</span><button class="mini-btn" id="goal-tag-btn">快速標籤</button></div>
         <textarea id="f-goal" class="f" placeholder="改善目標…"></textarea>
+        <div class="tag-panel" id="goal-tag-panel"></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title"><span class="bar"></span>初始狀態分析</div>
-      <span class="label">起始狀態摘要</span>
+      <div class="head-flex"><span class="label">起始狀態摘要</span><button class="mini-btn" id="summary-tag-btn">展開快速標籤</button></div>
       <textarea id="f-summary" class="f" placeholder="客戶生活型態與背景摘要…" style="min-height:84px;"></textarea>
+      <div class="tag-panel" id="summary-tag-panel"></div>
       <div class="row mt">
         <div><span class="label">健康風險項目</span><textarea id="f-risks" class="f" placeholder="如：代謝障礙、慢性發炎等…"></textarea></div>
         <div>
@@ -100,13 +102,16 @@
       <div class="card-title"><span class="bar"></span>結案點評與後續規劃</div>
       <div class="row">
         <div><span class="label" style="color:#059669;">最顯著的進步點</span>
-          <select id="f-progress" class="f"><option value="">選擇表現優異項</option></select></div>
+          <select id="f-progress" class="f"><option value="">選擇表現優異項</option></select>
+          <input id="f-progress-custom" class="f mt" placeholder="輸入自訂亮點描述…" style="display:none;"></div>
         <div><span class="label" style="color:#e11d48;">下一階段關注點</span>
-          <select id="f-focus" class="f"><option value="">選擇需調整項</option></select></div>
+          <select id="f-focus" class="f"><option value="">選擇需調整項</option></select>
+          <input id="f-focus-custom" class="f mt" placeholder="輸入自訂瓶頸描述…" style="display:none;"></div>
       </div>
       <div class="mt">
-        <span class="label">結案溫馨語錄</span>
+        <div class="head-flex"><span class="label">結案溫馨語錄</span><button class="mini-btn" id="quote-btn">展開語錄庫</button></div>
         <input id="f-quote" class="f" placeholder="溫暖的總結語句…">
+        <div class="tag-panel" id="quote-panel"></div>
       </div>
       <div class="mt">
         <div class="head-flex"><span class="label">下一階段推薦方案（可多選 · 來源 Google Sheet）</span><span class="toggle" data-toggle="showRecs">顯示推薦區塊<span class="sw"></span></span></div>

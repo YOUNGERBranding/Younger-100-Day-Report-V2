@@ -41,6 +41,88 @@
       var opt = document.createElement("option"); opt.value = o; opt.textContent = o; $(id).appendChild(opt);
     });
   });
+  // 自訂內容 → 顯示自訂輸入框
+  [["f-progress", "f-progress-custom"], ["f-focus", "f-focus-custom"]].forEach(function (pair) {
+    $(pair[0]).addEventListener("change", function () {
+      var custom = this.value === "自訂內容…";
+      $(pair[1]).style.display = custom ? "block" : "none";
+      renderPreview();
+    });
+  });
+
+  // ---------- 快速標籤資料 ----------
+  var GOAL_TAGS = [
+    ["❤️ 心血管循環", ["心血管功能", "血壓調節", "血脂平衡", "血液循環改善"]],
+    ["⚡ 能量管理", ["慢性疲勞", "提升精力", "改善體力", "增強耐力"]],
+    ["🧠 神經認知", ["提升專注力", "改善記憶力", "減輕腦霧", "情緒穩定", "睡眠品質"]],
+    ["🛡 免疫抗壓", ["提升身體抗壓能力", "增強免疫系統", "降低發炎指標", "壓力管理"]],
+    ["⚖️ 代謝體重", ["減輕體重", "新陳代謝提升", "血糖穩定", "胰島素敏感性"]],
+    ["🌿 消化腸道", ["腸道健康", "消化功能改善", "腸道菌群平衡", "營養吸收優化"]],
+    ["🏃 運動表現", ["運動表現提升", "肌肉恢復", "運動耐力", "身體組成改善"]],
+    ["🔮 荷爾蒙調節", ["荷爾蒙平衡", "甲狀腺功能", "生殖健康", "壓力荷爾蒙調節"]]
+  ];
+  var SUMMARY_TAGS = [
+    ["💤 作息習慣", ["熬夜", "睡眠不足", "作息不規律", "晚睡晚起", "睡眠品質差"]],
+    ["🚭 不良嗜好", ["抽菸", "過量飲酒", "咖啡因依賴", "久坐不動", "暴飲暴食"]],
+    ["🏢 職業環境", ["夜班工作", "高壓工作", "常搭飛機", "輪班制度", "長期加班"]],
+    ["🌍 環境因素", ["環境污染", "空氣品質差", "噪音環境", "化學物質接觸", "電磁波暴露"]],
+    ["😨 壓力相關", ["壓力大", "情緒不穩", "焦慮傾向", "憂鬱情緒", "人際壓力"]],
+    ["🤧 健康狀況", ["常過敏", "免疫力低下", "慢性發炎", "腸胃敏感", "荷爾蒙失調"]],
+    ["🧬 家族病史", ["家族高血壓", "家族糖尿病", "家族心血管疾病", "家族癌症史", "家族自體免疫疾病"]],
+    ["🍔 飲食習慣", ["外食頻繁", "加工食品攝取過多", "蔬果攝取不足", "水分攝取不足", "不規律進食"]],
+    ["💊 用藥習慣", ["長期服藥", "止痛藥依賴", "保健食品過量", "抗生素使用頻繁", "荷爾蒙治療"]]
+  ];
+  var QUOTES = [
+    ["🎉 達標恭喜", ["恭喜您成功達成健康目標！您的堅持與努力已經開花結果，這份成就值得為自己驕傲。", "太棒了！您已經成功完成這階段的健康計畫，每一個小小的改變都讓您更接近理想的自己。", "您做到了！從數據可以看出您的用心與付出，這就是健康投資最美好的回報。"]],
+    ["💪 努力肯定", ["您的每一份努力我們都看見了，健康之路雖不容易，但您正走在正確的道路上。", "感謝您對自己健康的重視與投入，這份堅持是改變的開始，也是希望的起點。", "您的認真態度令人敬佩，每一個健康的選擇都在為更好的明天累積能量。"]],
+    ["🌱 持續加油", ["健康是一場馬拉松，環境變化需要時間。您已經起跑了，請保持這份美好的節奏繼續前進。", "您正在往正確的方向前進，請繼續保持這份對健康的熱忱與堅持。", "每一天的小改變都在累積成大蛻變，期待與您一同見證更多美好的改變。"]],
+    ["🤗 未達標鼓勵", ["健康改善需要時間，您已經踏出重要的第一步，讓我們一起調整步調繼續努力。", "每個人的身體節奏不同，重要的是您願意開始改變，我們會陪伴您找到最適合的方式。", "目標雖然還未達成，但您的每一份努力都有意義，讓我們重新檢視計畫，為下一階段做好準備。"]]
+  ];
+
+  // ---------- 建立標籤面板（append 模式：點選/自訂加到 textarea）----------
+  function appendTag(targetId, text) {
+    var el = $(targetId), cur = el.value.trim();
+    var parts = cur ? cur.split(/[、,，\n]/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+    if (parts.indexOf(text) > -1) return;
+    parts.push(text);
+    el.value = parts.join("、");
+    renderPreview();
+  }
+  function buildTagPanel(panelId, btnId, targetId, data, customPlaceholder) {
+    var panel = $(panelId);
+    var html = '<div class="tag-cats">';
+    data.forEach(function (cat) {
+      html += '<div class="tag-cat"><h5>' + cat[0] + '</h5><div class="tag-chips">';
+      cat[1].forEach(function (tag) { html += '<button type="button" class="chip" data-tag="' + escapeAttr(tag) + '">' + escapeHtml(tag) + '</button>'; });
+      html += '</div></div>';
+    });
+    html += '</div><div class="tag-custom"><input class="f" placeholder="' + customPlaceholder + '"></div>';
+    panel.innerHTML = html;
+    $(btnId).addEventListener("click", function () { panel.classList.toggle("open"); });
+    panel.addEventListener("click", function (e) {
+      var chip = e.target.closest(".chip"); if (chip) appendTag(targetId, chip.dataset.tag);
+    });
+    panel.querySelector(".tag-custom input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); var v = this.value.trim(); if (v) { appendTag(targetId, v); this.value = ""; } }
+    });
+  }
+  buildTagPanel("goal-tag-panel", "goal-tag-btn", "f-goal", GOAL_TAGS, "自訂標籤（按 Enter 新增）…");
+  buildTagPanel("summary-tag-panel", "summary-tag-btn", "f-summary", SUMMARY_TAGS, "自訂摘要標籤（按 Enter 新增）…");
+
+  // ---------- 語錄庫（replace 模式：點選帶入語錄欄）----------
+  (function buildQuotePanel() {
+    var panel = $("quote-panel"), html = "";
+    QUOTES.forEach(function (cat) {
+      html += '<div class="quote-cat"><h5>' + cat[0] + '</h5>';
+      cat[1].forEach(function (q) { html += '<div class="quote-item" data-q="' + escapeAttr(q) + '">' + escapeHtml(q) + '</div>'; });
+      html += '</div>';
+    });
+    panel.innerHTML = html;
+    $("quote-btn").addEventListener("click", function () { panel.classList.toggle("open"); });
+    panel.addEventListener("click", function (e) {
+      var item = e.target.closest(".quote-item"); if (item) { $("f-quote").value = item.dataset.q; panel.classList.remove("open"); renderPreview(); }
+    });
+  })();
 
   // ---------- 收集資料 ----------
   function readScores(group) {
@@ -72,8 +154,8 @@
       showTrend: state.showTrend,
       showRadar: state.showRadar,
       aiText: $("f-ai").value.trim(),
-      progressPoint: $("f-progress").value,
-      focusPoint: $("f-focus").value,
+      progressPoint: resolveSelect("f-progress", "f-progress-custom"),
+      focusPoint: resolveSelect("f-focus", "f-focus-custom"),
       quote: $("f-quote").value.trim(),
       recs: state.recs,
       showRecs: state.showRecs
@@ -187,8 +269,7 @@
   });
   $("prod-done").addEventListener("click", function () {
     prodModal.classList.remove("open");
-    var names = state.recs.map(function (r) { return r.title; });
-    $("rec-selected").textContent = names.length ? "已選：" + names.join("、") : "尚未選擇";
+    $("rec-selected").textContent = state.recs.length ? "已選 " + state.recs.length + " 項" : "尚未選擇";
     renderPreview();
   });
 
@@ -269,6 +350,12 @@
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+  function resolveSelect(selId, customId) {
+    var v = $(selId).value;
+    if (v === "自訂內容…") return $(customId).value.trim();
+    return v;
   }
 
   renderPreview();

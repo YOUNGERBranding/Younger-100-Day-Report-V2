@@ -13,7 +13,9 @@
       goal: "主要改善目標",
       trend: "數據改善趨勢", trendHint: "與自己的起點 D0 相比",
       action: "你的行動力", actionHint: "D0 vs D90",
-      self: "自評", baseline: "基準（你的 D0）", d0: "D0", d90: "D90",
+      self: "自評", baseline: "基準（你的 D0）", d0: "D0", recentAvg: "D30–D90 均值",
+      highlight: "專屬行動方針",
+      progress: "進步亮點", focus: "優化方向",
       summary: " 顧問總結",
       recs: "下一階段推薦方案",
       note1: "詳細檢測內容請至 ", noteLink: "Shopify 會員中心", note2: " 查看",
@@ -29,7 +31,9 @@
       goal: "Primary Goal",
       trend: "Improvement Trend", trendHint: "Compared to your own D0 baseline",
       action: "Your Action Power", actionHint: "D0 vs D90",
-      self: "Self-rating", baseline: "Baseline (your D0)", d0: "D0", d90: "D90",
+      self: "Self-rating", baseline: "Baseline (your D0)", d0: "D0", recentAvg: "D30–D90 avg",
+      highlight: "Personalized Action Plan",
+      progress: "Key Progress", focus: "Focus Area",
       summary: " — Consultant's Summary",
       recs: "Recommended Next Steps",
       note1: "For full test details, visit your ", noteLink: "Shopify Member Center", note2: "",
@@ -47,15 +51,6 @@
     });
   }
   function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
-
-  // 主觀身體感受四項在某天的平均（只計 >0），全 0 回傳 null
-  function feelAvg(feel, day) {
-    var vals = ["morning", "energy", "evening", "sync"]
-      .map(function (k) { return num(feel[k] && feel[k][day]); })
-      .filter(function (n) { return n > 0; });
-    if (!vals.length) return null;
-    return vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
-  }
 
   var charts = [];
   function destroyCharts() { charts.forEach(function (c) { try { c.destroy(); } catch (e) {} }); charts = []; }
@@ -82,6 +77,11 @@
     html += '</div>';
     if (d.goal) html += '<div class="r-goal"><span>' + esc(t.goal) + '</span><b>' + esc(d.goal) + '</b></div>';
 
+    // 專屬行動方針（顧問報告重點，保留換行）
+    if (d.showHighlights !== false && d.highlights) {
+      html += '<div class="r-sec"><div class="r-highlight"><div class="h">📌 ' + esc(t.highlight) + '</div><p>' + esc(d.highlights) + '</p></div></div>';
+    }
+
     // charts
     var showTrend = d.showTrend !== false, showRadar = d.showRadar !== false;
     if (showTrend || showRadar) {
@@ -96,7 +96,7 @@
         html += '<div class="r-chart"><div class="r-sec-h">' + esc(t.action) + '</div>';
         html += '<div class="hint">' + esc(t.actionHint) + '</div>';
         html += '<div class="chartbox"><canvas id="rc-radar"></canvas></div>';
-        html += '<div class="r-legend"><span><i style="background:#cbd5e1"></i>' + esc(t.d0) + '</span><span><i style="background:#0d9488"></i>' + esc(t.d90) + '</span></div></div>';
+        html += '<div class="r-legend"><span><i style="background:#cbd5e1"></i>' + esc(t.d0) + '</span><span><i style="background:#0d9488"></i>' + esc(t.recentAvg) + '</span></div></div>';
       }
       html += '</div></div>';
     }
@@ -106,6 +106,14 @@
       html += '<div class="r-sec"><div class="r-summary">';
       html += '<div class="h">' + esc((d.consultant || "") + t.summary) + '</div>';
       html += '<p>' + esc(d.aiText) + '</p></div></div>';
+    }
+
+    // 進步亮點 / 優化方向
+    if (d.progressPoint || d.focusPoint) {
+      html += '<div class="r-sec"><div class="r-points">';
+      if (d.progressPoint) html += '<div class="r-point up"><div class="lbl">✨ ' + esc(t.progress) + '</div><div class="val">' + esc(d.progressPoint) + '</div></div>';
+      if (d.focusPoint) html += '<div class="r-point focus"><div class="lbl">🔍 ' + esc(t.focus) + '</div><div class="val">' + esc(d.focusPoint) + '</div></div>';
+      html += '</div></div>';
     }
 
     // recommendations
@@ -121,6 +129,8 @@
       html += '</div>';
     }
 
+    if (d.quote) html += '<div class="r-quote">「' + esc(d.quote) + '」</div>';
+
     html += '</div>'; // r-pad
 
     // footer
@@ -134,6 +144,19 @@
     return html;
   }
 
+  var C_UP = "#16a34a", C_EQ = "#f59e0b", C_DOWN = "#ef4444", C_BASE = "#0d9488";
+  // 與基準比較上色（差距 < 0.05 視為相同）
+  function cmpColor(v, base) {
+    if (v > base + 0.05) return C_UP;
+    if (v < base - 0.05) return C_DOWN;
+    return C_EQ;
+  }
+  // 一組分數的平均（只計 >0）；無有效值回傳 null
+  function meanOf(arr) {
+    var v = arr.filter(function (x) { return x > 0; });
+    return v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null;
+  }
+
   function drawCharts(d, lang) {
     var t = I18N[lang] || I18N.zh;
     if (typeof Chart === "undefined") return;
@@ -141,15 +164,25 @@
 
     var trendEl = document.getElementById("rc-trend");
     if (trendEl) {
-      var actual = DAYS.map(function (day) { return feelAvg(d.feel || {}, day); });
-      var baseVal = actual[0];
-      var base = DAYS.map(function () { return baseVal; });
+      var feel = d.feel || {};
+      // 各時間點四項均值
+      var raw = DAYS.map(function (day) {
+        return meanOf(["morning", "energy", "evening", "sync"].map(function (k) { return num(feel[k] && feel[k][day]); }));
+      });
+      // 基準 = D0 均值（若 D0 無紀錄，取第一個有值者，再不行為 0）
+      var baseVal = raw[0];
+      if (baseVal == null) { baseVal = raw.find(function (x) { return x != null; }); if (baseVal == null) baseVal = 0; }
+      // 缺紀錄的點 → 停在 D0 高度
+      var actual = raw.map(function (v) { return v == null ? baseVal : Number(v.toFixed(2)); });
+      var base = DAYS.map(function () { return Number(baseVal.toFixed(2)); });
+      var ptColors = actual.map(function (v, i) { return i === 0 ? C_BASE : cmpColor(v, baseVal); });
+
       charts.push(new Chart(trendEl, {
         type: "line",
         data: {
           labels: ["D0", "D30", "D60", "D90"],
           datasets: [
-            { data: actual, borderColor: "#0d9488", backgroundColor: "rgba(13,148,136,.08)", borderWidth: 2, fill: true, tension: .4, pointRadius: 2.5, pointBackgroundColor: "#0d9488", spanGaps: true },
+            { data: actual, borderColor: "#0d9488", backgroundColor: "rgba(13,148,136,.08)", borderWidth: 2, fill: true, tension: .4, pointRadius: 4, pointBackgroundColor: ptColors, pointBorderColor: ptColors },
             { data: base, borderColor: "#aab4bd", borderWidth: 1.5, borderDash: [4, 4], fill: false, pointRadius: 0 }
           ]
         },
@@ -167,14 +200,20 @@
       var act = d.act || {};
       var keys = ["diet", "nutrition", "exercise", "sleep"];
       var d0 = keys.map(function (k) { return num(act[k] && act[k].d0); });
-      var d90 = keys.map(function (k) { return num(act[k] && act[k].d90); });
+      // 彩色層 = D30/D60/D90 均值（無則退回 D0）
+      var later = keys.map(function (k) {
+        var m = meanOf([num(act[k] && act[k].d30), num(act[k] && act[k].d60), num(act[k] && act[k].d90)]);
+        return m == null ? num(act[k] && act[k].d0) : Number(m.toFixed(2));
+      });
+      var ptColors = later.map(function (v, i) { return cmpColor(v, d0[i]); });
+
       charts.push(new Chart(radarEl, {
         type: "radar",
         data: {
           labels: t.radar,
           datasets: [
-            { data: d0, borderColor: "#cbd5e1", backgroundColor: "rgba(203,213,225,.2)", borderWidth: 1.5, pointRadius: 1.5 },
-            { data: d90, borderColor: "#0d9488", backgroundColor: "rgba(13,148,136,.15)", borderWidth: 1.5, pointRadius: 2, pointBackgroundColor: "#0d9488" }
+            { data: d0, borderColor: "#cbd5e1", backgroundColor: "rgba(203,213,225,.2)", borderWidth: 1.5, pointRadius: 1.5, pointBackgroundColor: "#cbd5e1" },
+            { data: later, borderColor: "#0d9488", backgroundColor: "rgba(13,148,136,.12)", borderWidth: 1.5, pointRadius: 4, pointBackgroundColor: ptColors, pointBorderColor: ptColors }
           ]
         },
         options: Object.assign({}, common, {
