@@ -42,7 +42,7 @@
     });
   });
   // 自訂內容 → 顯示自訂輸入框
-  [["f-progress", "f-progress-custom"], ["f-focus", "f-focus-custom"], ["f-retest", "f-retest-custom"]].forEach(function (pair) {
+  [["f-progress", "f-progress-custom"], ["f-focus", "f-focus-custom"]].forEach(function (pair) {
     $(pair[0]).addEventListener("change", function () {
       var custom = this.value === "自訂內容…";
       $(pair[1]).style.display = custom ? "block" : "none";
@@ -129,7 +129,7 @@
   $("quote-btn").addEventListener("click", function () { $("quote-panel").classList.toggle("open"); });
   $("quote-panel").addEventListener("click", function (e) {
     var item = e.target.closest(".quote-item");
-    if (item) { $("f-quote").value = item.dataset.q; $("quote-panel").classList.remove("open"); renderPreview(); }
+    if (item) { $("f-quote").value = item.dataset.q.replace(/[。.．\s]+$/, ""); $("quote-panel").classList.remove("open"); renderPreview(); }
   });
 
   // ---------- 收集資料 ----------
@@ -164,7 +164,7 @@
       aiText: $("f-ai").value.trim(),
       progressPoint: resolveSelect("f-progress", "f-progress-custom"),
       focusPoint: resolveSelect("f-focus", "f-focus-custom"),
-      retest: resolveSelect("f-retest", "f-retest-custom"),
+      retest: $("f-retest").value,
       quote: $("f-quote").value.trim(),
       recs: state.recs,
       showRecs: state.showRecs
@@ -177,6 +177,7 @@
   document.addEventListener("input", function (e) {
     if (e.target.matches(".f, [data-score]")) renderPreview();
   });
+  $("f-retest").addEventListener("change", renderPreview);
 
   // toggles
   [].slice.call(document.querySelectorAll("[data-toggle]")).forEach(function (el) {

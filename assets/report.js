@@ -52,9 +52,18 @@
   };
   function trPoint(v, lang) { return lang === "en" && POINT_EN[v] ? POINT_EN[v] : v; }
 
-  // 建議檢驗期間預設項中→英
-  var RETEST_EN = { "1 個月後": "In 1 month", "3 個月後": "In 3 months", "6 個月後": "In 6 months", "1 年後": "In 1 year" };
-  function trRetest(v, lang) { return lang === "en" && RETEST_EN[v] ? RETEST_EN[v] : v; }
+  // 去除結尾句點/句號/空白
+  function stripEnd(s) { return String(s == null ? "" : s).replace(/[。.．\s]+$/, ""); }
+
+  // 顧問選一個日期 → 顯示自該日起的一個月區間（YYYY-MM-DD ～ YYYY-MM-DD）
+  function retestRange(start, lang) {
+    var d0 = new Date(start + "T00:00:00");
+    if (isNaN(d0.getTime())) return start;
+    var d1 = new Date(d0); d1.setMonth(d1.getMonth() + 1); d1.setDate(d1.getDate() - 1);
+    var p = function (x) { return ("0" + x).slice(-2); };
+    var f = function (d) { return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
+    return f(d0) + (lang === "en" ? " – " : " ～ ") + f(d1);
+  }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -68,6 +77,7 @@
 
   function buildHTML(d, lang) {
     var t = I18N[lang] || I18N.zh;
+    var colon = lang === "en" ? ": " : "：";
     var logoDark = (d.assetBase || "") + "logo/Logo-dark.png";
     var logoWhite = (d.assetBase || "") + "logo/Logo-white.png";
     var html = "";
@@ -119,11 +129,11 @@
       html += '<p>' + esc(d.aiText) + '</p></div></div>';
     }
 
-    // 進步亮點 / 優化方向
+    // 進步亮點 / 優化方向（標籤與內容同行）
     if (d.progressPoint || d.focusPoint) {
       html += '<div class="r-sec"><div class="r-points">';
-      if (d.progressPoint) html += '<div class="r-point up"><div class="lbl">✨ ' + esc(t.progress) + '</div><div class="val">' + esc(trPoint(d.progressPoint, lang)) + '</div></div>';
-      if (d.focusPoint) html += '<div class="r-point focus"><div class="lbl">🔍 ' + esc(t.focus) + '</div><div class="val">' + esc(trPoint(d.focusPoint, lang)) + '</div></div>';
+      if (d.progressPoint) html += '<div class="r-point up"><span class="lbl">✨ ' + esc(t.progress) + colon + '</span><span class="val">' + esc(trPoint(d.progressPoint, lang)) + '</span></div>';
+      if (d.focusPoint) html += '<div class="r-point focus"><span class="lbl">🔍 ' + esc(t.focus) + colon + '</span><span class="val">' + esc(trPoint(d.focusPoint, lang)) + '</span></div>';
       html += '</div></div>';
     }
 
@@ -138,17 +148,18 @@
       html += '</div></div>';
     }
 
-    // 建議下次檢驗時間
-    if (d.retest) {
-      var colon = lang === "en" ? ": " : "：";
-      html += '<div class="r-retest">🗓 ' + esc(t.retestLabel) + colon + esc(trRetest(d.retest, lang)) + '</div>';
-    }
-
     // 會員中心提示（放在推薦方案下方）
     html += '<div class="r-note">' + esc(t.note1) + '<a href="' + ACCOUNT_URL + '" target="_blank" rel="noopener">' + esc(t.noteLink) + '</a>' + esc(t.note2) + '</div>';
 
-    // 結案語錄（上方細線 + 較寬間距）
-    if (d.quote) html += '<div class="r-quote">「' + esc(d.quote) + '」</div>';
+    // 建議下次檢驗時間（顧問選一日期 → 顯示自該日起的一個月區間）
+    if (d.retest) {
+      html += '<div class="r-retest">🗓 ' + esc(t.retestLabel) + colon + esc(retestRange(d.retest, lang)) + '</div>';
+    }
+
+    // 結案語錄（上方細線 + 大引號裝飾，去除結尾句點）
+    if (d.quote) {
+      html += '<div class="r-quote"><span class="qmark">“</span><div class="qtext">' + esc(stripEnd(d.quote)) + '</div></div>';
+    }
 
     html += '</div>'; // r-pad
 

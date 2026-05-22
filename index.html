@@ -118,16 +118,8 @@
         <div id="rec-selected" class="selected-line">尚未選擇</div>
       </div>
       <div class="mt">
-        <span class="label">建議下次檢驗時間</span>
-        <select id="f-retest" class="f">
-          <option value="">選擇建議檢驗時間</option>
-          <option>1 個月後</option>
-          <option>3 個月後</option>
-          <option>6 個月後</option>
-          <option>1 年後</option>
-          <option value="自訂內容…">自訂內容…</option>
-        </select>
-        <input id="f-retest-custom" class="f mt" placeholder="輸入自訂檢驗時間…" style="display:none;">
+        <span class="label">建議下次檢驗時間（選一日期，報告顯示自該日起的一個月區間）</span>
+        <input type="date" id="f-retest" class="f">
       </div>
     </div>
 
