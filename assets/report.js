@@ -45,6 +45,13 @@
 
   var DAYS = ["d0", "d30", "d60", "d90"];
 
+  // 進步點／關注點預設項目中→英對照（自訂文字找不到時原樣顯示）
+  var POINT_EN = {
+    "晨間開機": "Morning energy", "日間續航": "Daytime stamina", "晚間餘力": "Evening reserve", "身心同步": "Mind-body sync",
+    "飲食調整": "Diet", "營養補充": "Supplements", "運動習慣": "Exercise", "睡眠儀式": "Sleep ritual"
+  };
+  function trPoint(v, lang) { return lang === "en" && POINT_EN[v] ? POINT_EN[v] : v; }
+
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -111,8 +118,8 @@
     // 進步亮點 / 優化方向
     if (d.progressPoint || d.focusPoint) {
       html += '<div class="r-sec"><div class="r-points">';
-      if (d.progressPoint) html += '<div class="r-point up"><div class="lbl">✨ ' + esc(t.progress) + '</div><div class="val">' + esc(d.progressPoint) + '</div></div>';
-      if (d.focusPoint) html += '<div class="r-point focus"><div class="lbl">🔍 ' + esc(t.focus) + '</div><div class="val">' + esc(d.focusPoint) + '</div></div>';
+      if (d.progressPoint) html += '<div class="r-point up"><div class="lbl">✨ ' + esc(t.progress) + '</div><div class="val">' + esc(trPoint(d.progressPoint, lang)) + '</div></div>';
+      if (d.focusPoint) html += '<div class="r-point focus"><div class="lbl">🔍 ' + esc(t.focus) + '</div><div class="val">' + esc(trPoint(d.focusPoint, lang)) + '</div></div>';
       html += '</div></div>';
     }
 
