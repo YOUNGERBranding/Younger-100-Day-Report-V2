@@ -1,5 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
-
 const CLAUDE_MODEL = "claude-sonnet-4-6";
 
 const FEEL = [["morning", "晨間開機", "Morning energy"], ["energy", "日間續航", "Daytime stamina"], ["evening", "晚間餘力", "Evening reserve"], ["sync", "身心同步", "Mind-body sync"]];
@@ -67,13 +65,25 @@ export default async (req) => {
   if (!key) return json({ error: "CLAUDE_API_KEY not set" }, 500);
 
   try {
-    const client = new Anthropic({ apiKey: key });
-    const msg = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 700,
-      messages: [{ role: "user", content: buildPrompt(body) }]
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 700,
+        messages: [{ role: "user", content: buildPrompt(body) }]
+      })
     });
-    const text = (msg.content || []).map(b => b.text || "").join("").trim();
+    const data = await r.json().catch(() => null);
+    if (!r.ok) {
+      const m = (data && data.error && data.error.message) || (r.status + " from Anthropic");
+      return json({ error: m }, 500);
+    }
+    const text = (data.content || []).map(b => b.text || "").join("").trim();
     return json({ text });
   } catch (err) {
     return json({ error: String(err.message || err) }, 500);
