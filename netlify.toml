@@ -1,0 +1,11 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# 本機開發：netlify dev
+[dev]
+  framework = "#static"
+  publish = "."

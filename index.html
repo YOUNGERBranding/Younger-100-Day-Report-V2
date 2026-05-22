@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOUNGER 100天結案報告產生器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logobox"><img src="logo/Logo-dark.png" alt="YOUNGER"></div>
+    <span class="gen">100-DAY REPORT GENERATOR</span>
+  </div>
+  <span class="role">PHYSIOLOGICAL DATA CONSULTANT TOOL</span>
+</div>
+
+<div class="layout">
+
+  <!-- ============ LEFT: FORM ============ -->
+  <div class="form-col">
+
+    <div class="card">
+      <div class="card-title"><span class="bar"></span>客戶基本資料</div>
+
+      <div style="background:#eafaf4; border:1px dashed var(--teal); border-radius:8px; padding:13px 15px; margin-bottom:18px;">
+        <div class="label accent" style="margin-bottom:8px;">🔍 用 Email 帶入客戶回報數據</div>
+        <div class="row">
+          <div style="flex:3;"><input id="lookup-email" class="f" placeholder="輸入客戶 email…"></div>
+          <div style="flex:1;"><button id="lookup-btn" class="gen-btn" style="width:100%; padding:10px;">查詢帶入</button></div>
+        </div>
+        <div id="lookup-msg" style="font-size:11px; color:var(--soft); margin-top:7px;">自動帶入 D0/D30/D60/D90 分數，缺漏的時間點以 0 填入。</div>
+      </div>
+
+      <div class="row">
+        <div><span class="label">客戶姓名</span><input id="f-name" class="f" placeholder="姓名"></div>
+        <div><span class="label">年齡</span><input id="f-age" class="f" placeholder="年齡"></div>
+        <div><span class="label">健康顧問</span><input id="f-consultant" class="f" placeholder="顧問名稱"></div>
+      </div>
+      <div class="mt">
+        <span class="label">主要改善目標</span>
+        <textarea id="f-goal" class="f" placeholder="改善目標…"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="bar"></span>初始狀態分析</div>
+      <span class="label">起始狀態摘要</span>
+      <textarea id="f-summary" class="f" placeholder="客戶生活型態與背景摘要…" style="min-height:84px;"></textarea>
+      <div class="row mt">
+        <div><span class="label">健康風險項目</span><textarea id="f-risks" class="f" placeholder="如：代謝障礙、慢性發炎等…"></textarea></div>
+        <div>
+          <div class="head-flex"><span class="label indigo">顧問報告重點</span><span class="toggle" data-toggle="showHighlights">顯示於報告<span class="sw"></span></span></div>
+          <textarea id="f-highlights" class="f hl" placeholder="吃、補、動之建議…"></textarea>
+        </div>
+      </div>
+      <div class="mt"><span class="label accent">關鍵抽血指標 (D0)</span><textarea id="f-blood" class="f d0" placeholder="如：血糖過高、維生素D缺乏…"></textarea></div>
+    </div>
+
+    <div class="card">
+      <div class="score-wrap">
+        <div class="score-card feel">
+          <div class="score-head"><div class="t"><i></i>主觀身體感受 <small>(0-5分)</small></div><span class="toggle" data-toggle="showTrend">數據圖<span class="sw"></span></span></div>
+          <table class="scores" id="tbl-feel">
+            <tr><th>項目</th><th>D0</th><th>D30</th><th>D60</th><th>D90</th></tr>
+          </table>
+        </div>
+        <div class="score-card act">
+          <div class="score-head"><div class="t"><i></i>行動策略執行度 <small>(0-5分)</small></div><span class="toggle" data-toggle="showRadar">行動力圖<span class="sw"></span></span></div>
+          <table class="scores" id="tbl-act">
+            <tr><th>項目</th><th>D0</th><th>D30</th><th>D60</th><th>D90</th></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ai">
+        <div class="ai-top">
+          <div><h3 class="serif">AI 智慧分析</h3><div class="desc">綜合「起始摘要、健康風險、顧問重點、改善目標、D0 抽血指標、主觀身體感受、行動策略執行度」生成結案總結。</div></div>
+          <button id="ai-btn" class="gen-btn">生成 AI 專家總結</button>
+        </div>
+        <div class="opt-row">
+          <div class="opt-group"><span>分析引擎</span><div class="seg" data-seg="engine"><button data-val="claude" class="on">Claude</button><button data-val="gemini">Gemini</button></div></div>
+          <div class="opt-group"><span>語氣風格</span><div class="seg" data-seg="tone"><button data-val="warm" class="on">溫暖</button><button data-val="professional">專業</button></div></div>
+          <div class="opt-group"><span>報告語言</span><div class="seg" data-seg="lang"><button data-val="zh" class="on">中文</button><button data-val="en">English</button></div></div>
+        </div>
+        <textarea id="f-ai" class="f" placeholder="AI 分析生成後可手動微調潤飾…" style="min-height:110px;"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="bar"></span>結案點評與後續規劃</div>
+      <div class="row">
+        <div><span class="label" style="color:#059669;">最顯著的進步點</span>
+          <select id="f-progress" class="f"><option value="">選擇表現優異項</option></select></div>
+        <div><span class="label" style="color:#e11d48;">下一階段關注點</span>
+          <select id="f-focus" class="f"><option value="">選擇需調整項</option></select></div>
+      </div>
+      <div class="mt">
+        <span class="label">結案溫馨語錄</span>
+        <input id="f-quote" class="f" placeholder="溫暖的總結語句…">
+      </div>
+      <div class="mt">
+        <div class="head-flex"><span class="label">下一階段推薦方案（可多選 · 來源 Google Sheet）</span><span class="toggle" data-toggle="showRecs">顯示推薦區塊<span class="sw"></span></span></div>
+        <button id="rec-btn" class="search-btn">🔍 點此選擇推薦方案</button>
+        <div id="rec-selected" class="selected-line">尚未選擇</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ RIGHT: PREVIEW ============ -->
+  <div class="preview-col">
+    <div class="preview-head">
+      <span class="ttl">FINAL OUTCOME PREVIEW</span>
+      <div class="export">
+        <button id="btn-png">PNG</button>
+        <button id="btn-pdf">PDF</button>
+        <button id="btn-link" class="on">🔗 產生連結</button>
+      </div>
+    </div>
+    <div id="preview"></div>
+  </div>
+
+</div>
+
+<!-- 產品選擇 modal -->
+<div class="modal-bg" id="prod-modal">
+  <div class="modal">
+    <div class="modal-h"><h3>選擇推薦方案</h3><button class="x" data-close>×</button></div>
+    <div class="modal-search"><input id="prod-search" class="f" placeholder="搜尋商品名稱…"></div>
+    <div class="modal-body" id="prod-list">載入中…</div>
+    <div class="modal-f"><button class="mini-btn" data-close>取消</button><button class="gen-btn" id="prod-done">完成選擇</button></div>
+  </div>
+</div>
+
+<!-- 連結 modal -->
+<div class="modal-bg" id="link-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-h"><h3>客戶報告連結</h3><button class="x" data-close>×</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px; color:var(--soft); line-height:1.7; margin-bottom:12px;">把這條連結貼給客人（LINE / Email / Shopify 皆可）。客人打開即為網頁版報告。</p>
+      <div class="link-box"><input id="link-url" readonly><button class="gen-btn" id="link-copy">複製</button></div>
+      <p style="font-size:12px; margin-top:14px;"><a id="link-open" href="#" target="_blank" style="color:var(--teal); font-weight:700;">↗ 在新分頁預覽報告</a></p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/report.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

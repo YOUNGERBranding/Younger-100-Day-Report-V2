@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOUNGER 100天結案報告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>body{background:var(--bg);}</style>
+</head>
+<body>
+<div class="public-wrap">
+  <div class="public-lang">
+    <div class="seg" style="background:#fff;border:1px solid var(--line2);">
+      <button id="lang-zh" data-val="zh">中文</button>
+      <button id="lang-en" data-val="en">EN</button>
+    </div>
+  </div>
+  <div id="report"></div>
+</div>
+
+<script src="assets/report.js"></script>
+<script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var id = params.get("id");
+    var el = document.getElementById("report");
+    var data = null, lang = "zh";
+
+    function paint() {
+      document.getElementById("lang-zh").classList.toggle("on", lang === "zh");
+      document.getElementById("lang-en").classList.toggle("on", lang === "en");
+      YoungerReport.render(el, data, lang);
+    }
+    document.getElementById("lang-zh").addEventListener("click", function () { lang = "zh"; paint(); });
+    document.getElementById("lang-en").addEventListener("click", function () { lang = "en"; paint(); });
+
+    if (!id) { el.innerHTML = '<p style="text-align:center;color:#64748b;padding:60px 0">找不到報告 ID</p>'; return; }
+    el.innerHTML = '<p style="text-align:center;color:#64748b;padding:60px 0">載入報告中…</p>';
+    fetch("/.netlify/functions/get-report?id=" + encodeURIComponent(id))
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.error || !res.data) throw new Error("not found");
+        data = res.data; lang = data.lang || "zh";
+        paint();
+      })
+      .catch(function () {
+        el.innerHTML = '<p style="text-align:center;color:#64748b;padding:60px 0">報告不存在或已過期</p>';
+      });
+  })();
+</script>
+</body>
+</html>

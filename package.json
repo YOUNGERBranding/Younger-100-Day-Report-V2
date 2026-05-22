@@ -1,0 +1,15 @@
+{
+  "name": "younger-100day-report-v2",
+  "version": "1.0.0",
+  "description": "YOUNGER 100-day health closing-report generator (consultant tool + public web report)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@google/genai": "^0.3.0",
+    "@netlify/blobs": "^8.1.0"
+  }
+}
