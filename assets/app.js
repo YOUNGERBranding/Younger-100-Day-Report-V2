@@ -78,6 +78,12 @@
     ["🌱 持續加油", ["健康是一場馬拉松，環境變化需要時間。您已經起跑了，請保持這份美好的節奏繼續前進。", "您正在往正確的方向前進，請繼續保持這份對健康的熱忱與堅持。", "每一天的小改變都在累積成大蛻變，期待與您一同見證更多美好的改變。"]],
     ["🤗 未達標鼓勵", ["健康改善需要時間，您已經踏出重要的第一步，讓我們一起調整步調繼續努力。", "每個人的身體節奏不同，重要的是您願意開始改變，我們會陪伴您找到最適合的方式。", "目標雖然還未達成，但您的每一份努力都有意義，讓我們重新檢視計畫，為下一階段做好準備。"]]
   ];
+  var QUOTES_EN = [
+    ["🎉 Goal Achieved", ["Congratulations on reaching your health goal! Your dedication and effort have truly paid off — this achievement is something to be proud of.", "Amazing work! You've completed this stage of your health plan, and every small change has brought you closer to your best self.", "You did it! The data clearly reflects your care and commitment — the most rewarding return on a health investment."]],
+    ["💪 Effort Recognized", ["We see every bit of effort you've put in. The path to health isn't easy, but you're walking the right way.", "Thank you for valuing and investing in your own health — this persistence is the beginning of change and the start of hope.", "Your dedication is admirable; every healthy choice is building energy for a better tomorrow."]],
+    ["🌱 Keep Going", ["Health is a marathon and change takes time. You've started strong — keep this wonderful rhythm going.", "You're heading in the right direction; please keep up this passion and commitment to your health.", "Every small daily change adds up to a big transformation. We look forward to witnessing more positive changes with you."]],
+    ["🤗 Encouragement", ["Improving health takes time. You've taken an important first step — let's adjust the pace and keep going together.", "Everyone's body has its own rhythm; what matters is your willingness to start. We'll help you find what works best for you.", "The goal isn't reached yet, but every effort counts. Let's review the plan together and prepare for the next stage."]]
+  ];
 
   // ---------- 建立標籤面板（append 模式：點選/自訂加到 textarea）----------
   function appendTag(targetId, text) {
@@ -109,20 +115,22 @@
   buildTagPanel("goal-tag-panel", "goal-tag-btn", "f-goal", GOAL_TAGS, "自訂標籤（按 Enter 新增）…");
   buildTagPanel("summary-tag-panel", "summary-tag-btn", "f-summary", SUMMARY_TAGS, "自訂摘要標籤（按 Enter 新增）…");
 
-  // ---------- 語錄庫（replace 模式：點選帶入語錄欄）----------
-  (function buildQuotePanel() {
-    var panel = $("quote-panel"), html = "";
-    QUOTES.forEach(function (cat) {
+  // ---------- 語錄庫（replace 模式：點選帶入語錄欄；隨報告語言切換中／英）----------
+  function renderQuotePanel() {
+    var panel = $("quote-panel"), data = state.lang === "en" ? QUOTES_EN : QUOTES, html = "";
+    data.forEach(function (cat) {
       html += '<div class="quote-cat"><h5>' + cat[0] + '</h5>';
       cat[1].forEach(function (q) { html += '<div class="quote-item" data-q="' + escapeAttr(q) + '">' + escapeHtml(q) + '</div>'; });
       html += '</div>';
     });
     panel.innerHTML = html;
-    $("quote-btn").addEventListener("click", function () { panel.classList.toggle("open"); });
-    panel.addEventListener("click", function (e) {
-      var item = e.target.closest(".quote-item"); if (item) { $("f-quote").value = item.dataset.q; panel.classList.remove("open"); renderPreview(); }
-    });
-  })();
+  }
+  renderQuotePanel();
+  $("quote-btn").addEventListener("click", function () { $("quote-panel").classList.toggle("open"); });
+  $("quote-panel").addEventListener("click", function (e) {
+    var item = e.target.closest(".quote-item");
+    if (item) { $("f-quote").value = item.dataset.q; $("quote-panel").classList.remove("open"); renderPreview(); }
+  });
 
   // ---------- 收集資料 ----------
   function readScores(group) {
@@ -186,7 +194,7 @@
       [].slice.call(seg.children).forEach(function (b) { b.classList.remove("on"); });
       btn.classList.add("on");
       state[seg.dataset.seg] = btn.dataset.val;
-      if (seg.dataset.seg === "lang") renderPreview();
+      if (seg.dataset.seg === "lang") { renderQuotePanel(); renderPreview(); }
     });
   });
 
