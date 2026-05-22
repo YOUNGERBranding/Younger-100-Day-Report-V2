@@ -33,7 +33,7 @@ function buildPrompt({ inputs, tone, lang }) {
 - ${zh ? "起始摘要" : "Initial summary"}: ${v(inputs.summary)}
 - ${zh ? "健康風險" : "Health risks"}: ${v(inputs.risks)}
 - ${zh ? "顧問重點" : "Consultant focus"}: ${v(inputs.highlights)}
-- ${zh ? "D0 關鍵抽血指標" : "Key D0 blood markers"}: ${v(inputs.bloodD0)}
+- ${zh ? "100天前起始抽血指標（僅起始檢測，期間未再複檢）" : "Baseline blood markers (taken 100 days ago; NOT re-tested during the program)"}: ${v(inputs.bloodD0)}
 - ${zh ? "主觀身體感受均值" : "Subjective feeling avg"}: D0 ${avg(f, "d0")} → D90 ${avg(f, "d90")}
 - ${zh ? "主觀指標明細" : "Feeling detail"}: ${feelLines}
 - ${zh ? "行動策略執行度" : "Action execution"}: ${actLines}
@@ -44,6 +44,7 @@ function buildPrompt({ inputs, tone, lang }) {
     return `你是 YOUNGER 的專業功能醫學健康顧問，為客戶撰寫 100 天計劃的結案總結。
 ${toneZh}
 分析重點：慶祝進步幅度大（+2 分以上）的項目；對退步或紀錄缺失給予理解與支持；對停滯項目給予耐心鼓勵。
+⚠️ 重要限制：本計劃期間客戶「並未再次抽血」，抽血指標只代表「100 天前的起始狀態」。請「絕對不要」宣稱任何抽血／血液數據有上升、下降、改善或趨勢，也不要拿抽血數據做前後比較。真正可比較的進步「只能」來自「主觀身體感受」與「行動策略執行度」的 D0→D90 變化；抽血指標僅能當作 100 天前的起始背景參考（例如「你 100 天前的起始檢測顯示…」）。
 輸出要求：180–250 字；以「Hi ${v(inputs.name)}，」開頭；只輸出總結內文，不要標題或條列符號；資料缺失請溫柔提醒下次補上即可。
 
 客戶資料：${data}`;
@@ -51,6 +52,7 @@ ${toneZh}
   return `You are YOUNGER's professional functional-medicine health consultant, writing the closing summary of a 100-day program.
 ${toneEn}
 Celebrate large improvements (+2 or more); be understanding about declines or missing records; encourage patience on plateaus.
+IMPORTANT CONSTRAINT: The client did NOT have a follow-up blood test during this program. The blood markers represent ONLY the baseline from 100 days ago. Never claim any blood/lab values rose, fell, improved, or trended, and never compare blood data over time. Measurable progress can ONLY come from the subjective feeling scores and action-execution scores (D0→D90); use the blood markers only as baseline context (e.g., "your baseline test 100 days ago showed...").
 Output: 120–180 words; start with "Hi ${v(inputs.name)},"; return only the summary prose (no headings or bullet points).
 
 Client data:${data}`;
