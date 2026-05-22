@@ -1,8 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenAI } from "@google/genai";
 
 const CLAUDE_MODEL = "claude-sonnet-4-6";
-const GEMINI_MODEL = "gemini-2.0-flash";
 
 const FEEL = [["morning", "晨間開機", "Morning energy"], ["energy", "日間續航", "Daytime stamina"], ["evening", "晚間餘力", "Evening reserve"], ["sync", "身心同步", "Mind-body sync"]];
 const ACT = [["diet", "飲食執行", "Diet"], ["nutrition", "營養補充", "Supplements"], ["exercise", "運動習慣", "Exercise"], ["sleep", "睡眠儀式", "Sleep ritual"]];
@@ -65,28 +63,18 @@ export default async (req) => {
   let body;
   try { body = await req.json(); } catch { return json({ error: "bad json" }, 400); }
 
-  const engine = body.engine === "gemini" ? "gemini" : "claude";
-  const prompt = buildPrompt(body);
+  const key = process.env.CLAUDE_API_KEY;
+  if (!key) return json({ error: "CLAUDE_API_KEY not set" }, 500);
 
   try {
-    if (engine === "claude") {
-      const key = process.env.CLAUDE_API_KEY;
-      if (!key) return json({ error: "CLAUDE_API_KEY not set" }, 500);
-      const client = new Anthropic({ apiKey: key });
-      const msg = await client.messages.create({
-        model: CLAUDE_MODEL,
-        max_tokens: 700,
-        messages: [{ role: "user", content: prompt }]
-      });
-      const text = (msg.content || []).map(b => b.text || "").join("").trim();
-      return json({ text, engine: "claude" });
-    } else {
-      const key = process.env.GEMINI_API_KEY;
-      if (!key) return json({ error: "GEMINI_API_KEY not set" }, 500);
-      const ai = new GoogleGenAI({ apiKey: key });
-      const resp = await ai.models.generateContent({ model: GEMINI_MODEL, contents: prompt });
-      return json({ text: (resp.text || "").trim(), engine: "gemini" });
-    }
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 700,
+      messages: [{ role: "user", content: buildPrompt(body) }]
+    });
+    const text = (msg.content || []).map(b => b.text || "").join("").trim();
+    return json({ text });
   } catch (err) {
     return json({ error: String(err.message || err) }, 500);
   }

@@ -13,7 +13,7 @@
   var DAY_LABELS = { Day0: "d0", Day30: "d30", Day60: "d60", Day90: "d90" };
   var Q_MAP = { q1: "morning", q2: "energy", q3: "evening", q4: "sync", q5: "diet", q6: "nutrition", q7: "exercise", q8: "sleep" };
 
-  var state = { engine: "claude", tone: "warm", lang: "zh", showHighlights: true, showTrend: true, showRadar: true, showRecs: true, recs: [] };
+  var state = { tone: "warm", lang: "zh", showHighlights: true, showTrend: true, showRadar: true, showRecs: true, recs: [] };
   var products = [];
 
   var $ = function (id) { return document.getElementById(id); };
@@ -289,7 +289,7 @@
     fetch("/.netlify/functions/analyze", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        engine: state.engine, tone: state.tone, lang: state.lang,
+        tone: state.tone, lang: state.lang,
         inputs: { name: d.name, age: d.age, goal: d.goal, summary: d.summary, risks: d.risks, highlights: d.highlights, bloodD0: d.bloodD0, feel: d.feel, act: d.act, progressPoint: d.progressPoint, focusPoint: d.focusPoint }
       })
     }).then(function (r) { return r.json(); }).then(function (res) {

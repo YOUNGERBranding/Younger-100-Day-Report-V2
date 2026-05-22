@@ -6,7 +6,7 @@
 
 ## 功能
 - **Email 帶入**：輸入客戶 email，自動帶入 Google Sheet 的 D0/D30/D60/D90 分數（缺漏以 0 計）
-- **AI 智慧分析**：可選 Claude / Gemini，語氣可選溫暖／專業，語言可選中／英
+- **AI 智慧分析**：Claude 生成，語氣可選溫暖／專業，語言可選中／英
 - **圖表**：數據改善趨勢（與自己 D0 基準比）、行動力雷達（D0 vs D90）
 - **推薦方案**：從 Google Sheet 多選商品（圖＋標題），報告以膠囊樣式呈現
 - **輸出**：產生客戶專屬報告連結（一鍵複製）＋ PNG ＋ PDF
@@ -15,17 +15,16 @@
 ## 架構
 - 前端：靜態 HTML / CSS / JS + Chart.js（無建置步驟）
 - 後端：Netlify Functions
-  - `analyze` — AI 代理（金鑰只放伺服器端環境變數）
+  - `analyze` — Claude AI 代理（金鑰只放伺服器端環境變數）
   - `save-report` / `get-report` — 報告存取（Netlify Blobs）
 - 資料：沿用既有 Google Sheet（透過 GAS `doGet` 查詢、商品表 CSV）
 
 ## 環境變數（在 Netlify 後台設定）
 | 變數 | 用途 |
 |------|------|
-| `CLAUDE_API_KEY` | Claude 分析 |
-| `GEMINI_API_KEY` | Gemini 分析 |
+| `CLAUDE_API_KEY` | Claude 分析（Anthropic 帳號需有額度）|
 
-> 🔒 安全：金鑰**只**放 Netlify 環境變數，前端不含任何金鑰。建議把先前外洩、寫死在舊站的 Gemini 金鑰停用重建。
+> 🔒 安全：金鑰**只**放 Netlify 環境變數，前端不含任何金鑰。
 
 ## 設定值（如需更換，改 `assets/app.js` 最上方）
 - `GAS_URL`：表單 / 查詢用的 Google Apps Script 網址
