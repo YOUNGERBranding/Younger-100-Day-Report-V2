@@ -19,7 +19,7 @@
       summary: " 顧問總結",
       recs: "下一階段推薦方案",
       note1: "詳細檢測內容請至 ", noteLink: "Shopify 會員中心", note2: " 查看",
-      fmsg: "祝賀您成功完成 100 天數據改善旅程，期待更健康的未來與您見面。",
+      retestLabel: "建議下次檢驗時間",
       disc: "本站所有檢測皆由通過認證的專業檢驗機構開立與執行，所提供的資訊不能取代醫師的專業診斷和治療。若您有任何不適或疑慮，請務必尋求專業醫療意見。© 2023 楊格健康股份有限公司. All rights reserved.",
       radar: ["飲食", "營養", "運動", "睡眠"]
     },
@@ -37,7 +37,7 @@
       summary: " — Consultant's Summary",
       recs: "Recommended Next Steps",
       note1: "For full test details, visit your ", noteLink: "Shopify Member Center", note2: "",
-      fmsg: "Congratulations on completing your 100-day improvement journey — here's to a healthier future ahead.",
+      retestLabel: "Suggested next test",
       disc: "All tests are conducted by certified professional laboratories. The information provided cannot replace a physician's professional diagnosis or treatment. If you experience any discomfort or concern, please seek professional medical advice. © 2023 Younger Health Co., Ltd. All rights reserved.",
       radar: ["Diet", "Supps", "Exercise", "Sleep"]
     }
@@ -51,6 +51,10 @@
     "飲食調整": "Diet", "營養補充": "Supplements", "運動習慣": "Exercise", "睡眠儀式": "Sleep ritual"
   };
   function trPoint(v, lang) { return lang === "en" && POINT_EN[v] ? POINT_EN[v] : v; }
+
+  // 建議檢驗期間預設項中→英
+  var RETEST_EN = { "1 個月後": "In 1 month", "3 個月後": "In 3 months", "6 個月後": "In 6 months", "1 年後": "In 1 year" };
+  function trRetest(v, lang) { return lang === "en" && RETEST_EN[v] ? RETEST_EN[v] : v; }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -123,7 +127,7 @@
       html += '</div></div>';
     }
 
-    // recommendations
+    // recommendations (pills)
     if (d.showRecs !== false && d.recs && d.recs.length) {
       html += '<div class="r-sec"><div class="r-sec-h">' + esc(t.recs) + '</div><div class="r-recs">';
       d.recs.forEach(function (r) {
@@ -131,11 +135,19 @@
         var img = r.image ? ' style="background-image:url(' + esc(r.image) + ')"' : "";
         html += '<span class="r-pill"><span class="t"' + img + '></span>' + esc(title) + '</span>';
       });
-      html += '</div>';
-      html += '<div class="r-note">' + esc(t.note1) + '<a href="' + ACCOUNT_URL + '" target="_blank" rel="noopener">' + esc(t.noteLink) + '</a>' + esc(t.note2) + '</div>';
-      html += '</div>';
+      html += '</div></div>';
     }
 
+    // 建議下次檢驗時間
+    if (d.retest) {
+      var colon = lang === "en" ? ": " : "：";
+      html += '<div class="r-retest">🗓 ' + esc(t.retestLabel) + colon + esc(trRetest(d.retest, lang)) + '</div>';
+    }
+
+    // 會員中心提示（放在推薦方案下方）
+    html += '<div class="r-note">' + esc(t.note1) + '<a href="' + ACCOUNT_URL + '" target="_blank" rel="noopener">' + esc(t.noteLink) + '</a>' + esc(t.note2) + '</div>';
+
+    // 結案語錄（上方細線 + 較寬間距）
     if (d.quote) html += '<div class="r-quote">「' + esc(d.quote) + '」</div>';
 
     html += '</div>'; // r-pad
@@ -144,8 +156,7 @@
     html += '<div class="r-footer"><div class="r-flockup">';
     html += '<img class="flogo" src="' + logoWhite + '" alt="YOUNGER">';
     html += '<span class="fsub">' + esc(t.sub) + '</span></div>';
-    html += '<div class="fmsg">' + esc(t.fmsg) + '</div>';
-    html += '<hr><div class="disc">' + esc(t.disc) + '</div></div>';
+    html += '<div class="disc">' + esc(t.disc) + '</div></div>';
 
     html += '</div>'; // report
     return html;

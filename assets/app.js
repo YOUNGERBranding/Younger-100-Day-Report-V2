@@ -42,7 +42,7 @@
     });
   });
   // 自訂內容 → 顯示自訂輸入框
-  [["f-progress", "f-progress-custom"], ["f-focus", "f-focus-custom"]].forEach(function (pair) {
+  [["f-progress", "f-progress-custom"], ["f-focus", "f-focus-custom"], ["f-retest", "f-retest-custom"]].forEach(function (pair) {
     $(pair[0]).addEventListener("change", function () {
       var custom = this.value === "自訂內容…";
       $(pair[1]).style.display = custom ? "block" : "none";
@@ -164,6 +164,7 @@
       aiText: $("f-ai").value.trim(),
       progressPoint: resolveSelect("f-progress", "f-progress-custom"),
       focusPoint: resolveSelect("f-focus", "f-focus-custom"),
+      retest: resolveSelect("f-retest", "f-retest-custom"),
       quote: $("f-quote").value.trim(),
       recs: state.recs,
       showRecs: state.showRecs
@@ -296,7 +297,7 @@
       $("f-ai").value = res.text || "";
       renderPreview();
     }).catch(function (err) {
-      toast("AI 生成失敗：" + err.message + "（本機尚未啟動 functions 時無法生成）");
+      toast("AI 生成失敗：" + err.message);
     }).finally(function () { btn.disabled = false; btn.textContent = orig; });
   });
 
