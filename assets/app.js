@@ -5,6 +5,7 @@
   // ===== 設定（如更換 GAS / 商品表，改這裡）=====
   var GAS_URL = "https://script.google.com/macros/s/AKfycbzvh1viE9ZJIcCAwRleFm1OXQ_Wcj-_VZd0_BFsji8eu74qoM52uUDHeG9LwvX94GkSYA/exec";
   var PRODUCTS_CSV = "https://docs.google.com/spreadsheets/d/1yIRPpRIXzNVQw9xlqBxemKEG84a-PffcyXJHLAKgWoQ/export?format=csv";
+  var USER_LIST_CSV = "https://docs.google.com/spreadsheets/d/12fjzCMfqXv-95UjHsI1ouUDmo5X_zI1d0S2vjq2_VXY/gviz/tq?tqx=out:csv&sheet=User_List";
 
   var FEEL = [["morning", "晨間開機"], ["energy", "日間續航"], ["evening", "晚間餘力"], ["sync", "身心同步"]];
   var ACT = [["diet", "飲食調整"], ["nutrition", "營養補充"], ["exercise", "運動習慣"], ["sleep", "睡眠儀式"]];
@@ -214,29 +215,77 @@
     });
   }
 
+  // 從 User_List CSV 找出該 email 的基本資料列
+  function fetchUserInfo(email) {
+    return new Promise(function (resolve) {
+      Papa.parse(USER_LIST_CSV, {
+        download: true, header: true,
+        complete: function (res) {
+          var hit = (res.data || []).find(function (r) {
+            return (r.Email || "").toString().trim().toLowerCase() === email;
+          });
+          resolve(hit || null);
+        },
+        error: function () { resolve(null); }
+      });
+    });
+  }
+
   $("lookup-btn").addEventListener("click", function () {
     var email = $("lookup-email").value.trim().toLowerCase();
     if (!email) { toast("請先輸入 email"); return; }
     var msg = $("lookup-msg");
     msg.textContent = "查詢中…";
-    jsonp(GAS_URL + "?email=" + encodeURIComponent(email)).then(function (rows) {
-      if (!rows || rows.error || !rows.length) { msg.textContent = "查無此 email 的回報紀錄"; return; }
-      // 先清零
-      [].slice.call(document.querySelectorAll("[data-score]")).forEach(function (i) { i.value = 0; });
-      // rows 由新到舊；每個 day 取第一筆出現的值
-      var seen = {};
-      rows.forEach(function (r) {
-        var day = DAY_LABELS[r.targetDay]; if (!day) return;
-        Object.keys(Q_MAP).forEach(function (q) {
-          var field = Q_MAP[q], k = field + "." + day;
-          if (seen[k]) return;
-          var inp = document.querySelector('[data-score="feel.' + k + '"],[data-score="act.' + k + '"]');
-          if (inp && r[q] !== "" && r[q] != null) { inp.value = Number(r[q]) || 0; seen[k] = true; }
+
+    Promise.all([
+      jsonp(GAS_URL + "?email=" + encodeURIComponent(email)).catch(function () { return null; }),
+      fetchUserInfo(email)
+    ]).then(function (results) {
+      var rows = results[0], info = results[1];
+      var hasScores = rows && !rows.error && rows.length;
+      if (!hasScores && !info) { msg.textContent = "查無此 email 的紀錄"; return; }
+
+      // 帶入分數（All_Data）
+      if (hasScores) {
+        [].slice.call(document.querySelectorAll("[data-score]")).forEach(function (i) { i.value = 0; });
+        var seen = {};
+        rows.forEach(function (r) {
+          var day = DAY_LABELS[r.targetDay]; if (!day) return;
+          Object.keys(Q_MAP).forEach(function (q) {
+            var field = Q_MAP[q], k = field + "." + day;
+            if (seen[k]) return;
+            var inp = document.querySelector('[data-score="feel.' + k + '"],[data-score="act.' + k + '"]');
+            if (inp && r[q] !== "" && r[q] != null) { inp.value = Number(r[q]) || 0; seen[k] = true; }
+          });
         });
-      });
-      var name = rows[0].targetName || rows[0].fillerName || "";
-      if (name && !$("f-name").value) $("f-name").value = name;
-      msg.textContent = "已帶入 " + rows.length + " 筆紀錄（缺漏以 0 計）";
+      }
+
+      // 帶入基本資料（User_List）：欄位空白不蓋；有值的就帶入
+      if (info) {
+        var map = {
+          "f-name": info["被填寫人姓名"] || info["填寫人姓名"],
+          "f-age": info["年齡"],
+          "f-consultant": info["顧問"],
+          "f-goal": info["主要改善目標"],
+          "f-summary": info["起始狀態摘要"],
+          "f-risks": info["健康風險項目"],
+          "f-highlights": info["顧問報告重點"],
+          "f-blood": info["關鍵抽血指標 (D0)"]
+        };
+        Object.keys(map).forEach(function (id) {
+          var v = (map[id] == null ? "" : String(map[id])).trim();
+          if (v) $(id).value = v;
+        });
+      } else if (hasScores) {
+        // fallback：沒有 User_List 紀錄時，至少從 All_Data 帶入姓名
+        var n = rows[0].targetName || rows[0].fillerName || "";
+        if (n && !$("f-name").value) $("f-name").value = n;
+      }
+
+      var parts = [];
+      if (hasScores) parts.push("分數 " + rows.length + " 筆");
+      if (info) parts.push("基本資料已帶入"); else parts.push("無 User_List 基本資料");
+      msg.textContent = "✓ " + parts.join("、") + "（空白欄位不變動）";
       renderPreview();
     }).catch(function () { msg.textContent = "查詢失敗，請稍後再試"; });
   });
